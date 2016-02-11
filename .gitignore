@@ -55,3 +55,7 @@ docs/_build/
 
 # PyBuilder
 target/
+
+# ADDED FEB 10th 2016 - Gedit adds these files automatically as backups.
+*~
+*.~
