@@ -1,8 +1,7 @@
 #Data collection and management software 
-##Python 2.7 
 ## Built for a heart disease research charity.
 
-####We are building software modules to complete the following tasks:
+####We are building software modules in Python 2.7 to complete the following tasks:
 1. Grab human-written route descriptions from a spreadsheet. 
 2. Interpret the route descriptions accurately, and make the user aware of unintelligible descriptions
 3. Use the data from the descriptions to query an online database
