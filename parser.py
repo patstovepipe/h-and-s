@@ -31,23 +31,74 @@ def parsetrips(str):
 	words = str.split()
 	output = [] 			# output is a list of unordered lists of 
 	endoftrip = 0			# trip details for each trip in route desc.
-	print 'length of words: ', len(words), '\nThe initial list:\n', words, '\n\n'
+#	print 'length of words: ', len(words), '\nThe initial list:\n', words, '\n\n'
 	while len(words) >= 1:
 		for word in words:
-			print 'examining word: ' + word
+#			print 'examining word: ' + word
 			if word in suffix_comma:
 				endoftrip = words.index(word) + 1
 				break
 			elif word in suffix:
-				print '\nword ', word, ' is in suffix. Looking for next delimiter:'
+#				print '\nword ', word, ' is in suffix. Looking for next delimiter:'
 				for i in range(words.index(word), len(words)):
-					print 'is the next delimiter ', words[i], '?',
+#					print 'is the next delimiter ', words[i], '?',
 					if words[i][-1] in delimiters:
-						print 'yes!'
+#						print 'yes!'
 						endoftrip = i + 1
 						break
 				break
 		output.append(words[:endoftrip])
 		words = words[endoftrip:]
-		print 'iteration complete. remaining words:\n', words, '\nnew output:\n', output, '\n\n' 
+#		print 'iteration complete. remaining words:\n', words, '\nnew output:\n', output, '\n\n' 
 	return output
+
+# Suppose we input this route into the above parser:
+# 4-40 Beach Dr Even#, 650-776 Mountjoy Ave Even#, 2019-2027 Runnymede Ave Odd# (19)
+# The output will look like this:
+# [['4-40', 'beach', 'dr', 'even#,'], ['650-776', 'mountjoy', 'ave', 'even#,'], ['2019-2027', 'runnymede', 'ave', 'odd#'], ['(19)']]
+
+# organizetrip()
+#
+#    Takes a list of assorted details, including street name, suffix, house
+#	 numbers and a string that specifies odd or even for those numbers.
+# 
+# 1. Create a new list and make the first item a string of the street name.
+# 2. Generate a list of ints that match the conditions in the list of details,
+#    and make that list the second item of the new list.
+# 3. Return the new list.
+
+def organizetrip(lst):
+	if len(lst) <= 1:
+		return []	
+	streetnameposlist = []	
+	housenumberlist = []
+	housenumbers = []
+	for word in lst:
+		if word in suffix:
+			streetnameposlist.append(lst.index(word)-1)
+			streetnameposlist.append(lst.index(word))
+		if word[0] in string.digits:
+			housenumberlist.append(word)
+	streetname = lst[streetnameposlist[0]] + lst[streetnameposlist[1]]
+	print housenumberlist	
+	for word in housenumberlist:
+		if '-' in word:
+			boundarylist = word.split('-')
+			for i in range(int(boundarylist[0]), int(boundarylist[1]), 2):
+				housenumbers.append(i)
+		else:
+			housenumbers.append(int(word))
+	output = [streetname, housenumbers]
+	return output
+
+def tester(route):
+	output = []	
+	trips = parsetrips(route)
+	for each in trips:
+		output.append(organizetrip(each))
+	return output
+
+# Parsing a sample route.
+route = '4-40 Beach Dr Even#, 650-776 Mountjoy Ave Even#, 2019-2027 Runnymede Ave Odd# (19)'
+tester(route)
+
