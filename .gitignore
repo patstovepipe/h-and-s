@@ -59,6 +59,13 @@ target/
 # Virtual Env
 venv/
 
+# Import/Export dir
+app/import/*
+app/export/*
+
+# Login details
+logindetails.txt
+
 # ADDED FEB 10th 2016 - Gedit adds these files automatically as backups.
 *~
 *.~
