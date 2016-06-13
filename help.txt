@@ -1,0 +1,22 @@
+Following is a summary of how command line args will work in the export.py module
+
+ARGUMENTS -------------------- 
+
+Up to two command line arguments will be accepted. 
+
+The second argument is the filepath to write to. If the file does not exist, it will be created at the path specified. If the filepath contains no extension, the extension will be added to the filepath.
+
+DEFAULTS -------------------- 
+- No args
+If the name special variable is main, inform the user of the proper use of this module. If the name special variable is NOT main, that means we're operating as a module in another script and we should just throw an error.
+
+If not a module. We will prompt the user to enter search keywords one after the other. A default of null for each keyword category can be chosen by hitting enter; this way the user can simply hit enter a bunch  of times until he hits the category he actually has a search keyword for. If no keywords are provided and we cover all possible keyword categories, then the program will exit.
+
+Using the input from this prompting, we construct a valid search dictionary and print it to stdout; we then query the database with that.
+
+- One argument
+This is assumed to be the first argument, the list of search parameters. Thus, a try catch block will be needed when we process this into the list of dictionaries that the requests require. It's possible that the first argument is not a list of search parameters, and we'll want to tell the user that this argument is the problem. 
+
+The try catch block that checks the validity of the first parameter will, of course, be used in every run of the program, not just when one parameter is supplied.
+
+In the case that only this one argument is supplied, we will write the results to export/results.xlsx and inform the user.

@@ -2,13 +2,9 @@ import sys
 import os
 
 import xlsxwriter
+import openpyxl
 
-"""
-
-Test Data
-
-"""
-
+# Test data
 routelist1 = ['Data-set-1', 'Jim street', 2000, 2001, 2002, 2005, 'Bob Avenue', 1300, 1400, 1500]
 
 routelist2 = ['Data-set-2', 'Pavi Place', 1000]
@@ -16,7 +12,6 @@ routelist2 = ['Data-set-2', 'Pavi Place', 1000]
 routelist3 = ['Data-set-3', 'Jim Street', 100, 100, 'Bob Place', 'Bob Place']
 
 testdata =[routelist1, routelist2, routelist3]
-
 
 if len(sys.argv) == 1:
 	print("No arguement provided, please provide test data set.")

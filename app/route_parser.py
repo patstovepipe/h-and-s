@@ -1,18 +1,36 @@
 # parser.py
 
+import sys
+from openpyxl import load_workbook
+import getopt
 import string
 
 # 'trip' represents a single street and it's house numbers.
-
 suffix_comma = ['st,', 'street,','rd,', 'road,', 'dr,', 'drive,', 'ave,', 'avenue,', 'pl,', 'place,', 'tce,', 'lane,', 'ln,', 'park,', 'prk,',]
 suffix = ['st', 'street','rd', 'road', 'dr', 'drive', 'ave', 'avenue', 'pl', 'place', 'tce', 'lane', 'ln', 'park', 'prk',]
 
 delimiters = [',', '/']
-
 oddcode = ['odd', '#odd', 'odd#', 'odd,', '#odd,', 'odd#,']
 evencode = ['even#', '#even', 'even', 'even,', '#even,', 'even#,',]
 
-# parsetrips()
+# Importing filename from command line, and collecting the data
+def init():
+    # the first arg is the name of this script, so we ignore it
+    args = sys.argv[1:]
+    if len(args) == 0:
+        return False
+
+    wb = load_workbook(filename = 'f16 route descriptions.xlsx', read_only=True)
+    ws = wb[wb.get_sheet_names()[0]]
+    result = []
+    for row in ws.iter_rows():
+        for cell in row:
+            if cell.column == 5 and cell.value != None:
+                result.append(cell.value)
+
+    print result
+
+# parse_trips()
 #
 # 1. Determine the location of the suffixes rd, ave, etc for each trip
 # 2. Determine when the next comma or forward slash (delimiter) occurs
@@ -25,49 +43,42 @@ evencode = ['even#', '#even', 'even', 'even,', '#even,', 'even#,',]
 #	 Instead, we find the occurence of a suffix, which occurs once per
 # 	 trip, and look ahead for the next delimiter. Everything behind the
 #	 next delimiter is put in an unordered list, which is handled later.
-
-def parsetrips(str):
+#
+# Suppose we input this route into the above parser:
+# 4-40 Beach Dr Even#, 650-776 Mountjoy Ave Even#, 2019-2027 Runnymede Ave Odd# (19)
+# The output will look like this:
+# [['4-40', 'beach', 'dr', 'even#,'], ['650-776', 'mountjoy', 'ave', 'even#,'], ['2019-2027', 'runnymede', 'ave', 'odd#'], ['(19)']]
+def parse_trips(str):
 	str = str.lower()
 	words = str.split()
-	output = [] 			# output is a list of unordered lists of
-	endoftrip = 0			# trip details for each trip in route desc.
-#	print 'length of words: ', len(words), '\nThe initial list:\n', words, '\n\n'
+	output = []
+	endoftrip = 0
 	while len(words) >= 1:
 		for word in words:
-#			print 'examining word: ' + word
 			if word in suffix_comma:
 				endoftrip = words.index(word) + 1
 				break
 			elif word in suffix:
-#				print '\nword ', word, ' is in suffix. Looking for next delimiter:'
 				for i in range(words.index(word), len(words)):
-#					print 'is the next delimiter ', words[i], '?',
 					if words[i][-1] in delimiters:
-#						print 'yes!'
 						endoftrip = i + 1
 						break
 				break
 		output.append(words[:endoftrip])
 		words = words[endoftrip:]
-#		print 'iteration complete. remaining words:\n', words, '\nnew output:\n', output, '\n\n'
 	return output
 
-# Suppose we input this route into the above parser:
-# 4-40 Beach Dr Even#, 650-776 Mountjoy Ave Even#, 2019-2027 Runnymede Ave Odd# (19)
-# The output will look like this:
-# [['4-40', 'beach', 'dr', 'even#,'], ['650-776', 'mountjoy', 'ave', 'even#,'], ['2019-2027', 'runnymede', 'ave', 'odd#'], ['(19)']]
-
-# organizetrip()
+# organize_trip()
 #
-#    Takes a list of assorted details, including street name, suffix, house
+#    Takes one list of assorted details, including street name, suffix, house
 #	 numbers and a string that specifies odd or even for those numbers.
+#    See the comments for parse_trips.
 #
 # 1. Create a new list and make the first item a string of the street name.
 # 2. Generate a list of ints that match the conditions in the list of details,
 #    and make that list the second item of the new list.
 # 3. Return the new list.
-
-def organizetrip(lst):
+def organize_trip(lst):
 	if len(lst) <= 1:
 		return []
 	streetnameposlist = []
@@ -80,7 +91,6 @@ def organizetrip(lst):
 		if word[0] in string.digits:
 			housenumberlist.append(word)
 	streetname = lst[streetnameposlist[0]] + lst[streetnameposlist[1]]
-	print housenumberlist
 	for word in housenumberlist:
 		if '-' in word:
 			boundarylist = word.split('-')
@@ -91,13 +101,12 @@ def organizetrip(lst):
 	output = [streetname, housenumbers]
 	return output
 
-def tester(route):
-	output = []
-	trips = parsetrips(route)
+def parse(route):
+	parsed_items = []
+	trips = parse_trips(route)
 	for each in trips:
-		output.append(organizetrip(each))
-	return output
+		parsed_items.append(organize_trip(each))
+	return parsed_items
 
-# Parsing a sample route.
-route = '4-40 Beach Dr Even#, 650-776 Mountjoy Ave Even#, 2019-2027 Runnymede Ave Odd# (19)'
-tester(route)
+if __name__=="__main__":
+    init()
