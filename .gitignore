@@ -61,7 +61,7 @@ venv/
 
 # Import/Export dir
 app/import/*
-app/export/*
+app/data/*
 
 # Login details
 logindetails.txt

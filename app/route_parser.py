@@ -1,5 +1,6 @@
 # parser.py
 
+import export
 import sys
 from openpyxl import load_workbook
 import getopt
@@ -15,10 +16,21 @@ evencode = ['even#', '#even', 'even', 'even,', '#even,', 'even#,',]
 
 # Importing filename from command line, and collecting the data
 def init():
-    # the first arg is the name of this script, so we ignore it
+
     args = sys.argv[1:]
     if len(args) == 0:
-        return False
+        print "[route_parser] No args provided - Running the following test route: "
+        testroute = "4-40 Beach Dr Even#, 650-776 Mountjoy Ave Even#, 2019-2027 Runnymede Ave Odd# (19)"
+        print testroute
+        parsedroute = parse(testroute)
+        print "[route_parser] Parsed the test route: ", parsedroute
+        for each in parsedroute:
+            if each == []:
+                continue
+            dict = export.make_dict({"Street": each[0]})
+            export.export(dict)
+        print "[route_parser] Successfully parsed route description and wrote data to file."
+        return
 
     wb = load_workbook(filename = 'f16 route descriptions.xlsx', read_only=True)
     ws = wb[wb.get_sheet_names()[0]]
