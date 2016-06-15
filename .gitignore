@@ -66,6 +66,9 @@ app/data/*
 # Login details
 logindetails.txt
 
+# Mac
+.DS_Store
+
 # ADDED FEB 10th 2016 - Gedit adds these files automatically as backups.
 *~
 *.~
