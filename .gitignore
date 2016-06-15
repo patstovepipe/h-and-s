@@ -63,6 +63,9 @@ venv/
 app/import/*
 app/data/*
 
+# Uploads
+app/uploads
+
 # Login details
 logindetails.txt
 
