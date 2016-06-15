@@ -75,5 +75,3 @@ logindetails.txt
 # ADDED FEB 10th 2016 - Gedit adds these files automatically as backups.
 *~
 *.~
-
-app/export.py

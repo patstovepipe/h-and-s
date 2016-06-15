@@ -5,6 +5,7 @@ import sys
 from openpyxl import load_workbook
 import getopt
 import string
+import time
 
 # 'trip' represents a single street and it's house numbers.
 suffix_comma = ['st,', 'street,','rd,', 'road,', 'dr,', 'drive,', 'ave,', 'avenue,', 'pl,', 'place,', 'tce,', 'lane,', 'ln,', 'park,', 'prk,',]
@@ -30,7 +31,7 @@ def args():
                 continue
             dict = export.make_dict({"Street": each[0]})
             export.export(dict)
-            sleep(5)
+            time.sleep(5)
         print "[route_parser] Successfully parsed route description and wrote data to file."
         return
 
@@ -41,7 +42,7 @@ def init():
     if len(args) == 0:
         route = raw_input("> [route_parser] Insert a route to query with, or nothing to run a test route.] \n \
                            > ")
-        if len(str) == 0:
+        if len(args) == 0:
             route = "4-40 Beach Dr Even#, 650-776 Mountjoy Ave Even#, 2019-2027 Runnymede Ave Odd# (19)"
             print "[route_parser] No args provided - Running the following test route: "
             print route
@@ -52,7 +53,7 @@ def init():
                 continue
             dict = export.make_dict({"Street": each[0]})
             export.export(dict)
-            sleep(5)
+            time.sleep(5)
         print "[route_parser] Successfully parsed route description and wrote data to file."
         return
 

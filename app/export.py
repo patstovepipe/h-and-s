@@ -6,84 +6,92 @@ import xlsxwriter
 import webbrowser
 from collections import OrderedDict
 
-def main():
-    #grab the search params and desired filename
-    dict = prompt_user()
-    path = raw_input('\n--> Supply a filename to write to [default: auto-generated]: ')
+# login to site and export data into xlsx
+def export(searchdict, filename = None):
+    print "Export Start."
+    print "Logging into site."
 
-    if len(path) == 0:
-        path = None
+    if not 'data' in os.listdir('.'):
+        os.mkdir('data')
 
-    # query the site and write to file
-    export(dict, path)
+    if filename == None:
+        filename = generate_filename(searchdict)
 
-    # done
+    # Enter login details here - will add static page to enter details at later point
+    username = ""
+    password = ""
+    domain = ""
+
+    session_requests = requests.session()
+
+    loginurl = domain + "/api/login"
+    payload = {'Username': username, 'Password': password}
+    result = session_requests.post(loginurl, data = payload)
+
+    print "Exporting search results to data/%s.xlsx" % filename
+    exporturl = domain + "/search/export"
+    # example payload = {'Data' : "%7B%22FirstName%22:null,%22LastName%22:null,%22City%22:%22Colwood%22,%22IsGroupByCity%22:false,%22AptNumber%22:null,%22Street%22:null,%22House%22:null,%22PostalCode%22:null,%22PhoneNumber1%22:null,%22PhoneNumber2%22:null,%22PhoneNumber3%22:null,%22Provinces%22:%5B%22BC%22,%22YT%22%5D,%22AlternativeName%22:null,%22SortColumnName%22:null%7D"}
+
+    # print format(searchdict)
+    payload = { 'Data' : format(searchdict) }
+    result = session_requests.post(exporturl, data = payload)
+
+    with open("data/%s.xlsx" % filename, "w") as f:
+        f.write(result.content)
+
+def get_dict():
+    return OrderedDict ([
+        ('FirstName', 'null'),
+        ('LastName', 'null'),
+        ('City', 'null'),
+        ('IsGroupByCity', 'false'),
+        ('AptNumber', 'null'),
+        ('Street', 'null'),
+        ('House', 'null'),
+        ('PostalCode', 'null'),
+        ('PhoneNumber1', 'null'),
+        ('PhoneNumber2', 'null'),
+        ('PhoneNumber3', 'null'),
+        ('Provinces', ['BC','YT']),
+        ('AlternativeName', 'null'),
+        ('SortColumnName', 'null')
+    ])
 
 # give option to enter each parameter
 def prompt_user():
-    dict = OrderedDict ([
-        ('FirstName', 'null'),
-        ('LastName', 'null'),
-        ('City', 'null'),
-        ('IsGroupByCity', 'false'),
-        ('AptNumber', 'null'),
-        ('Street', 'null'),
-        ('House', 'null'),
-        ('PostalCode', 'null'),
-        ('PhoneNumber1', 'null'),
-        ('PhoneNumber2', 'null'),
-        ('PhoneNumber3', 'null'),
-        ('Provinces', ['BC','YT']),
-        ('AlternativeName', 'null'),
-        ('SortColumnName', 'null')
-    ])
+    searchdict = get_dict()
 
     print "Please give search terms or press [return] to use default."
-    for each in dict.items():
+    for each in searchdict.items():
         input = raw_input("--> %s [default %s]: " % (each[0], each[1]))
-        dict[each[0]] = each[1] if (len(input) == 0) else input
-    return dict
+        searchdict[each[0]] = each[1] if (len(input) == 0) else input
+    return searchdict
 
 # allow one or more search keys to be passed to construct a full query from
 def make_dict(partial_dict):
-    dict = OrderedDict ([
-        ('FirstName', 'null'),
-        ('LastName', 'null'),
-        ('City', 'null'),
-        ('IsGroupByCity', 'false'),
-        ('AptNumber', 'null'),
-        ('Street', 'null'),
-        ('House', 'null'),
-        ('PostalCode', 'null'),
-        ('PhoneNumber1', 'null'),
-        ('PhoneNumber2', 'null'),
-        ('PhoneNumber3', 'null'),
-        ('Provinces', ['BC','YT']),
-        ('AlternativeName', 'null'),
-        ('SortColumnName', 'null')
-    ])
+    searchdict = get_dict()
 
     for each in partial_dict.items():
-        dict[each[0]] = each[1]
+        searchdict[each[0]] = each[1]
 
-    return dict
+    return searchdict
 
 # using using prompt data, create a filename
-def generate_filename(dict):
+def generate_filename(routedict):
     num = 1
 
     # files are stored like main st 1.xlsx, main st 2.xlsx
     # this block adds on another , i.e. main st 3.xlsx
     for each in os.listdir('data'):
-        if each.startswith(dict['Street']):
-            num = int(each[(len(dict['Street']) + 1):-5]) + 1
-    filename = "%s %d" % (dict['Street'], num)
+        if each.startswith(routedict['Street']):
+            num = int(each[(len(routedict['Street']) + 1):-5]) + 1
+    filename = "%s %d" % (routedict['Street'], num)
     return filename
 
 # format the dictionary to url encoding
-def format(dict):
+def format(searchdict):
     data = "%7B"
-    for key, value in dict.iteritems():
+    for key, value in searchdict.iteritems():
         data += "%22" + key + "%22:"
         if key == 'IsGroupByCity':
             data += value
@@ -106,39 +114,17 @@ def format(dict):
     data += "%7D"
     return data
 
-# login to site and export data into xlsx
-def export(dict, filename=None):
-    print "Export Start."
-    print "Logging into site."
+def terminal():
+    #grab the search params and desired filename
+    searchdict = prompt_user()
+    path = raw_input('\n--> Supply a filename to write to [default: auto-generated]: ')
 
-    if not 'data' in os.listdir('.'):
-        os.mkdir('data')
+    if len(path) == 0:
+        path = None
 
-    if filename == None:
-        filename = generate_filename(dict)
-
-    # Enter login details here - will add static page to enter details at later point
-    username = ""
-    password = ""
-    domain = ""
-
-    # sign in - https://kazuar.github.io/scraping-tutorial/
-    session_requests = requests.session()
-    loginurl = domain + "/api/login"
-    payload = {'Username': username, 'Password': password}
-    result = session_requests.post(loginurl, data = payload)
-
-    print "Exporting search results to data/%s.xlsx" % filename
-    exporturl = domain + "/search/export"
-    # example payload = {'Data' : "%7B%22FirstName%22:null,%22LastName%22:null,%22City%22:%22Colwood%22,%22IsGroupByCity%22:false,%22AptNumber%22:null,%22Street%22:null,%22House%22:null,%22PostalCode%22:null,%22PhoneNumber1%22:null,%22PhoneNumber2%22:null,%22PhoneNumber3%22:null,%22Provinces%22:%5B%22BC%22,%22YT%22%5D,%22AlternativeName%22:null,%22SortColumnName%22:null%7D"}
-    payload = { 'Data' : format(dict) }
-    result = session_requests.post(exporturl, data = payload)
-
-    with open("data/%s.xlsx" % filename, "w") as f:
-        f.write(result.content)
-
-if __name__ == "__main__":
-    main()
+    # query the site and write to file
+    export(searchdict, path)
+    # done
 
 # following for testing the search - query string is url encoded
 
