@@ -14,31 +14,56 @@ delimiters = [',', '/']
 oddcode = ['odd', '#odd', 'odd#', 'odd,', '#odd,', 'odd#,']
 evencode = ['even#', '#even', 'even', 'even,', '#even,', 'even#,',]
 
-# Importing filename from command line, and collecting the data
-def init():
-
+def args():
     args = sys.argv[1:]
     if len(args) == 0:
-        print "[route_parser] No args provided - Running the following test route: "
-        testroute = "4-40 Beach Dr Even#, 650-776 Mountjoy Ave Even#, 2019-2027 Runnymede Ave Odd# (19)"
-        print testroute
-        parsedroute = parse(testroute)
-        print "[route_parser] Parsed the test route: ", parsedroute
+        route = raw_input("> [route_parser] Insert a route to query with, or nothing to run a test route.] \n \
+                           > ")
+        if len(str) == 0:
+            route = "4-40 Beach Dr Even#, 650-776 Mountjoy Ave Even#, 2019-2027 Runnymede Ave Odd# (19)"
+            print "[route_parser] No args provided - Running the following test route: "
+            print route
+        parsedroute = parse(route)
+        print "[route_parser] Parsed the test route: \n", parsedroute
         for each in parsedroute:
             if each == []:
                 continue
             dict = export.make_dict({"Street": each[0]})
             export.export(dict)
+            sleep(5)
         print "[route_parser] Successfully parsed route description and wrote data to file."
         return
 
-    wb = load_workbook(filename = 'f16 route descriptions.xlsx', read_only=True)
+# Importing filename from command line, and collecting the data
+def init():
+
+    args = sys.argv[1:]
+    if len(args) == 0:
+        route = raw_input("> [route_parser] Insert a route to query with, or nothing to run a test route.] \n \
+                           > ")
+        if len(str) == 0:
+            route = "4-40 Beach Dr Even#, 650-776 Mountjoy Ave Even#, 2019-2027 Runnymede Ave Odd# (19)"
+            print "[route_parser] No args provided - Running the following test route: "
+            print route
+        parsedroute = parse(route)
+        print "[route_parser] Parsed the test route: \n", parsedroute
+        for each in parsedroute:
+            if each == []:
+                continue
+            dict = export.make_dict({"Street": each[0]})
+            export.export(dict)
+            sleep(5)
+        print "[route_parser] Successfully parsed route description and wrote data to file."
+        return
+
+    wb = load_workbook(filename = '%s' % args[0], read_only=True)
     ws = wb[wb.get_sheet_names()[0]]
+    print ws
     result = []
     for row in ws.iter_rows():
         for cell in row:
             if cell.column == 5 and cell.value != None:
-                result.append(cell.value)
+                print cell.value
 
     print result
 
