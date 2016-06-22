@@ -1,6 +1,6 @@
 # parser.py
 
-import export
+from export import Export
 import sys
 from openpyxl import load_workbook
 import getopt
@@ -15,26 +15,6 @@ delimiters = [',', '/']
 oddcode = ['odd', '#odd', 'odd#', 'odd,', '#odd,', 'odd#,']
 evencode = ['even#', '#even', 'even', 'even,', '#even,', 'even#,',]
 
-def args():
-    args = sys.argv[1:]
-    if len(args) == 0:
-        route = raw_input("> [route_parser] Insert a route to query with, or nothing to run a test route.] \n \
-                           > ")
-        if len(str) == 0:
-            route = "4-40 Beach Dr Even#, 650-776 Mountjoy Ave Even#, 2019-2027 Runnymede Ave Odd# (19)"
-            print "[route_parser] No args provided - Running the following test route: "
-            print route
-        parsedroute = parse(route)
-        print "[route_parser] Parsed the test route: \n", parsedroute
-        for each in parsedroute:
-            if each == []:
-                continue
-            dict = export.make_dict({"Street": each[0]})
-            export.export(dict)
-            time.sleep(5)
-        print "[route_parser] Successfully parsed route description and wrote data to file."
-        return
-
 # Importing filename from command line, and collecting the data
 def init():
 
@@ -48,11 +28,14 @@ def init():
             print route
         parsedroute = parse(route)
         print "[route_parser] Parsed the test route: \n", parsedroute
+        ex = Export()
+        ex.set_login_details("","")
         for each in parsedroute:
             if each == []:
                 continue
-            dict = export.make_dict({"Street": each[0]})
-            export.export(dict)
+            parsed_routes = {"Street": each[0]}
+            ex.set_search_dict(parsed_routes)
+            ex.generate_excel()
             time.sleep(5)
         print "[route_parser] Successfully parsed route description and wrote data to file."
         return
@@ -128,7 +111,7 @@ def organize_trip(lst):
 			streetnameposlist.append(lst.index(word))
 		if word[0] in string.digits:
 			housenumberlist.append(word)
-	streetname = lst[streetnameposlist[0]] + lst[streetnameposlist[1]]
+	streetname = lst[streetnameposlist[0]] + " " + lst[streetnameposlist[1]]
 	for word in housenumberlist:
 		if '-' in word:
 			boundarylist = word.split('-')
