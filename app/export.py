@@ -25,6 +25,7 @@ class Export:
         result = self._login(session_requests)
         print "After login."
         self._export_to_file(session_requests, result)
+        self.filename = None
 
     def _check_directory(self):
         if not 'data' in os.listdir('.'):

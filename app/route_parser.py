@@ -111,7 +111,7 @@ def organize_trip(lst):
 			streetnameposlist.append(lst.index(word))
 		if word[0] in string.digits:
 			housenumberlist.append(word)
-	streetname = lst[streetnameposlist[0]] + lst[streetnameposlist[1]]
+	streetname = lst[streetnameposlist[0]] + " " + lst[streetnameposlist[1]]
 	for word in housenumberlist:
 		if '-' in word:
 			boundarylist = word.split('-')
