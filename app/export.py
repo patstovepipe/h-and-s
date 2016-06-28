@@ -5,27 +5,33 @@ from lxml import html
 import xlsxwriter
 import webbrowser
 from collections import OrderedDict
+from xlrd import open_workbook
+import xlwt
+import time
 
 class _LoginDetails:
     def __init__(self, username, password):
         self.username = username
         self.password = password
+        self.domain = None
 
 class Export:
     def __init__(self):
         self.logindetails = None
-        self.filename = None
+        self.filename = 'results'
         self.searchdict = None
-        self.domain = ""
+        self.parsedroutes = None
 
     def generate_excel(self):
-        self._check_directory()
-        self._check_filename()
-        session_requests = requests.session()
-        result = self._login(session_requests)
-        print "After login."
-        self._export_to_file(session_requests, result)
-        self.filename = None
+        if self.logindetails.username != None and self.logindetails.password != None and self.logindetails.domain != None:
+            self._check_directory()
+            with requests.session() as s:
+                self._login(s)
+                print ("After login.")
+                self._process_routes(s)
+            self.filename = None
+        else:
+            print "Login details are missing or incomplete."
 
     def _check_directory(self):
         if not 'data' in os.listdir('.'):
@@ -46,25 +52,49 @@ class Export:
         filename = "%s %d" % (searchdict['Street'], num)
         return filename
 
-    def set_search_dict(self, parsed_routes):
-        self.searchdict = Export._searchdict(parsed_routes)
+    def set_parsed_routes(self, parsedroutes):
+        self.parsedroutes = parsedroutes
+
+    def _set_search_dict(self, parsedroute):
+        self.searchdict = Export._searchdict(parsedroute)
 
     def set_login_details(self, username, password):
         self.logindetails = _LoginDetails(username, password)
 
     def _login(self, session_requests):
-        loginurl = self.domain + "/api/login"
+        loginurl = self.logindetails.domain + "/api/login"
         payload = {'Username': self.logindetails.username, 'Password': self.logindetails.password}
-        return session_requests.post(loginurl, data = payload)
+        session_requests.post(loginurl, data = payload)
 
-    def _export_to_file(self, session_requests, result):
-        exporturl = self.domain + "/search/export"
+    def _export_to_file(self, session_requests):
+        exporturl = self.logindetails.domain + "/search/export"
         payload = { 'Data' : Export._formatdict(self.searchdict) }
         result = session_requests.post(exporturl, data = payload)
-        print "Exporting search results to data/%s.xlsx" % self.filename
 
-        with open("data/%s.xlsx" % self.filename, "w") as f:
-            f.write(result.content)
+        print "Exporting search results to data/%s.xlsx" % self.filename
+        # print result.content
+
+        with open("data/%s.xlsx" % self.filename, "wb") as f:
+            for chunk in result.iter_content(chunk_size=1024):
+                f.write(chunk)
+
+    def _process_routes(self, session_requests):
+        filtereddictlist = []
+        for route in self.parsedroutes:
+            if route == []:
+                continue
+            self._set_search_dict({ "Street": route[0] })
+            self._export_to_file(session_requests)
+
+            dictlist = []
+            dictlist = Export._getlistfromworkbook('data/%s.xlsx' % self.filename)
+            dictlist = Export._filterdictlist(route[1], dictlist)
+            filtereddictlist.extend(dictlist)
+
+            print filtereddictlist
+
+            time.sleep(5)
+        Export._writetofile('data/export.xlsx', filtereddictlist)
 
     @staticmethod
     def _emptydict():
@@ -120,3 +150,54 @@ class Export:
                 data += ","
         data += "%7D"
         return data
+
+    @staticmethod
+    def _resultsdict():
+        return OrderedDict ([
+            ('Details', None),
+            ('Name', None),
+            ('House', None),
+            ('Street', None),
+            ('Apt', None),
+            ('City', None),
+            ('Prov', None),
+            ('Postal', None),
+            ('Phone', None)
+        ])
+
+    @staticmethod
+    def _getlistfromworkbook(filename):
+        wb = open_workbook(filename)
+        s = wb.sheet_by_index(0)
+
+        num_cols = s.ncols
+        resultsdictlist = []
+        for row_idx in range(0, s.nrows):
+            resultsdict = Export._resultsdict()
+            for col_idx, key in zip(range(0, num_cols), resultsdict):
+                cell_obj = s.cell(row_idx, col_idx)
+                # print cell_obj.value
+                resultsdict[key] = cell_obj.value
+            resultsdictlist.append(resultsdict)
+
+        return resultsdictlist
+
+    @staticmethod
+    def _filterdictlist(housenums, listtofilter):
+        housenums = [str(x) for x in housenums]
+        return [x for x in listtofilter if x['House'] in housenums]
+
+    @staticmethod
+    def _writetofile(filename, dictlist):
+        book = xlwt.Workbook()
+        sh = book.add_sheet('Sheet1')
+
+        col_names = Export._resultsdict()
+        for idx, key in zip(range(0, len(col_names)), col_names):
+            sh.write(0, idx, key)
+
+        for row_idx in range(0, len(dictlist)):
+            for col_idx, key in zip(range(0, len(dictlist[row_idx])), dictlist[row_idx]):
+                sh.write(row_idx + 1, col_idx, dictlist[row_idx][key])
+
+        book.save(filename)
