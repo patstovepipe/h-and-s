@@ -28,15 +28,12 @@ def init():
             print route
         parsedroute = parse(route)
         print "[route_parser] Parsed the test route: \n", parsedroute
+
         ex = Export()
-        ex.set_login_details("","")
-        for each in parsedroute:
-            if each == []:
-                continue
-            parsed_routes = {"Street": each[0]}
-            ex.set_search_dict(parsed_routes)
-            ex.generate_excel()
-            time.sleep(5)
+        ex.set_login_details(None, None)
+        ex.set_parsed_routes(parsedroute)
+        ex.generate_excel()
+
         print "[route_parser] Successfully parsed route description and wrote data to file."
         return
 

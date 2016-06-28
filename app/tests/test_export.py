@@ -4,7 +4,7 @@ from export import Export
 
 def test_basic_export():
     ex = Export()
-    ex.set_login_details("","")
+    ex.set_login_details(None, None)
     searchdict = {"City" : "Colwood"}
     ex.set_search_dict(searchdict)
     ex.generate_excel()
