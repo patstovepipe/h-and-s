@@ -8,5 +8,6 @@ MarkupSafe==0.23
 openpyxl==2.3.5
 requests==2.10.0
 Werkzeug==0.11.9
+-e git+git@github.com:patstovepipe/h-and-s.git@03450bb87c133e8a946301ea0545d82512b28d5a#egg=xlrd&subdirectory=packages/xlrd
 XlsxWriter==0.8.9
 xlwt==1.0.0
