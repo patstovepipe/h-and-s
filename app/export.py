@@ -11,25 +11,24 @@ import time
 
 class _LoginDetails:
     def __init__(self, username, password):
-        self.username = username
-        self.password = password
-        self.domain = None
+        self._username = username
+        self._password = password
+        self._domain = None
 
 class Export:
     def __init__(self):
-        self.logindetails = None
-        self.filename = 'results'
-        self.searchdict = None
-        self.parsedroutes = None
+        self._logindetails = None
+        self._filename = "results"
+        self._parsedroutes = []
 
     def generate_excel(self):
-        if self.logindetails.username != None and self.logindetails.password != None and self.logindetails.domain != None:
+        if self._logindetails._username != None and self._logindetails._password != None and self._logindetails._domain != None:
             self._check_directory()
+            self._check_filename()
             with requests.session() as s:
                 self._login(s)
                 print ("After login.")
                 self._process_routes(s)
-            self.filename = None
         else:
             print "Login details are missing or incomplete."
 
@@ -38,63 +37,48 @@ class Export:
             os.mkdir('data')
 
     def _check_filename(self):
-        if self.filename == None:
-            self.filename = Export._generate_filename(self.searchdict)
-
-    @staticmethod
-    def _generate_filename(searchdict):
-        num = 1
-        # files are stored like main st 1.xlsx, main st 2.xlsx
-        # this block adds on another , i.e. main st 3.xlsx
-        for each in os.listdir('data'):
-            if each.startswith(searchdict['Street']):
-                num = int(each[(len(searchdict['Street']) + 1):-5]) + 1
-        filename = "%s %d" % (searchdict['Street'], num)
-        return filename
+        if self._filename == None:
+            self._filename = "results"
 
     def set_parsed_routes(self, parsedroutes):
-        self.parsedroutes = parsedroutes
-
-    def _set_search_dict(self, parsedroute):
-        self.searchdict = Export._searchdict(parsedroute)
+        self._parsedroutes = parsedroutes
 
     def set_login_details(self, username, password):
-        self.logindetails = _LoginDetails(username, password)
+        self._logindetails = _LoginDetails(username, password)
 
     def _login(self, session_requests):
-        loginurl = self.logindetails.domain + "/api/login"
-        payload = {'Username': self.logindetails.username, 'Password': self.logindetails.password}
+        loginurl = self._logindetails._domain + "/api/login"
+        payload = {'Username': self._logindetails._username, 'Password': self._logindetails._password}
         session_requests.post(loginurl, data = payload)
-
-    def _export_to_file(self, session_requests):
-        exporturl = self.logindetails.domain + "/search/export"
-        payload = { 'Data' : Export._formatdict(self.searchdict) }
-        result = session_requests.post(exporturl, data = payload)
-
-        print "Exporting search results to data/%s.xlsx" % self.filename
-        # print result.content
-
-        with open("data/%s.xlsx" % self.filename, "wb") as f:
-            for chunk in result.iter_content(chunk_size=1024):
-                f.write(chunk)
 
     def _process_routes(self, session_requests):
         filtereddictlist = []
-        for route in self.parsedroutes:
+
+        for route in self._parsedroutes:
             if route == []:
                 continue
-            self._set_search_dict({ "Street": route[0] })
-            self._export_to_file(session_requests)
-
+            searchdict = Export._searchdict({ "Street": route[0] })
+            self._export_to_file(session_requests, searchdict)
             dictlist = []
-            dictlist = Export._getlistfromworkbook('data/%s.xlsx' % self.filename)
+            dictlist = Export._getlistfromworkbook('data/%s.xlsx' % self._filename)
             dictlist = Export._filterdictlist(route[1], dictlist)
             filtereddictlist.extend(dictlist)
-
             print filtereddictlist
-
             time.sleep(5)
+
         Export._writetofile('data/export.xlsx', filtereddictlist)
+
+    def _export_to_file(self, session_requests, searchdict):
+        exporturl = self._logindetails._domain + "/search/export"
+        payload = { 'Data' : Export._formatdict(searchdict) }
+        result = session_requests.post(exporturl, data = payload)
+
+        print "Exporting search results to data/%s.xlsx" % self._filename
+        # print result.content
+
+        with open("data/%s.xlsx" % self._filename, "wb") as f:
+            for chunk in result.iter_content(chunk_size=1024):
+                f.write(chunk)
 
     @staticmethod
     def _emptydict():

@@ -6,6 +6,7 @@ from openpyxl import load_workbook
 import getopt
 import string
 import time
+from xlrd import open_workbook
 
 # 'trip' represents a single street and it's house numbers.
 suffix_comma = ['st,', 'street,','rd,', 'road,', 'dr,', 'drive,', 'ave,', 'avenue,', 'pl,', 'place,', 'tce,', 'lane,', 'ln,', 'park,', 'prk,',]
@@ -16,37 +17,32 @@ oddcode = ['odd', '#odd', 'odd#', 'odd,', '#odd,', 'odd#,']
 evencode = ['even#', '#even', 'even', 'even,', '#even,', 'even#,',]
 
 # Importing filename from command line, and collecting the data
-def init():
-
-    args = sys.argv[1:]
-    if len(args) == 0:
-        route = raw_input("> [route_parser] Insert a route to query with, or nothing to run a test route.] \n \
-                           > ")
-        if len(args) == 0:
-            route = "4-40 Beach Dr Even#, 650-776 Mountjoy Ave Even#, 2019-2027 Runnymede Ave Odd# (19)"
-            print "[route_parser] No args provided - Running the following test route: "
-            print route
+def init(route = None):
+    if route != None:
         parsedroute = parse(route)
         print "[route_parser] Parsed the test route: \n", parsedroute
+    else:
+        # This else block doesn't work properly yet.
+        # wb = open_workbook("app/uploads/f16_route_descriptions.xlsx")
+        s = wb.sheet_by_index(0)
 
-        ex = Export()
-        ex.set_login_details(None, None)
-        ex.set_parsed_routes(parsedroute)
-        ex.generate_excel()
+        num_cols = s.ncols
+        parsedroutes = []
+        for row_idx in range(6, s.nrows):
+            cell_obj = s.cell(row_idx, 4)
+            # print cell_obj.value
+            parsedroute  = parse(cell_obj.value)
+            print parsedroute
+            parsedroutes.extend(parsedroute)
+
+        # ex = Export()
+        # ex.set_login_details(None, None)
+        # ex.set_parsed_routes(parsedroutes)
+        # ex.generate_excel()
 
         print "[route_parser] Successfully parsed route description and wrote data to file."
-        return
 
-    wb = load_workbook(filename = '%s' % args[0], read_only=True)
-    ws = wb[wb.get_sheet_names()[0]]
-    print ws
-    result = []
-    for row in ws.iter_rows():
-        for cell in row:
-            if cell.column == 5 and cell.value != None:
-                print cell.value
-
-    print result
+    return
 
 # parse_trips()
 #
@@ -67,24 +63,25 @@ def init():
 # The output will look like this:
 # [['4-40', 'beach', 'dr', 'even#,'], ['650-776', 'mountjoy', 'ave', 'even#,'], ['2019-2027', 'runnymede', 'ave', 'odd#'], ['(19)']]
 def parse_trips(str):
-	str = str.lower()
-	words = str.split()
-	output = []
-	endoftrip = 0
-	while len(words) >= 1:
-		for word in words:
-			if word in suffix_comma:
-				endoftrip = words.index(word) + 1
-				break
-			elif word in suffix:
-				for i in range(words.index(word), len(words)):
-					if words[i][-1] in delimiters:
-						endoftrip = i + 1
-						break
-				break
-		output.append(words[:endoftrip])
-		words = words[endoftrip:]
-	return output
+    str = str.lower()
+    words = str.split()
+    output = []
+    endoftrip = 0
+    print words
+    while len(words) >= 1:
+        for word in words:
+            if word in suffix_comma:
+                endoftrip = words.index(word) + 1
+                break
+            elif word in suffix:
+                for i in range(words.index(word), len(words)):
+                    if words[i][-1] in delimiters:
+                        endoftrip = i + 1
+                        break
+                break
+        output.append(words[:endoftrip])
+        words = words[endoftrip:]
+    return output
 
 # organize_trip()
 #
@@ -97,34 +94,38 @@ def parse_trips(str):
 #    and make that list the second item of the new list.
 # 3. Return the new list.
 def organize_trip(lst):
-	if len(lst) <= 1:
-		return []
-	streetnameposlist = []
-	housenumberlist = []
-	housenumbers = []
-	for word in lst:
-		if word in suffix:
-			streetnameposlist.append(lst.index(word)-1)
-			streetnameposlist.append(lst.index(word))
-		if word[0] in string.digits:
-			housenumberlist.append(word)
-	streetname = lst[streetnameposlist[0]] + " " + lst[streetnameposlist[1]]
-	for word in housenumberlist:
-		if '-' in word:
-			boundarylist = word.split('-')
-			for i in range(int(boundarylist[0]), int(boundarylist[1]), 2):
-				housenumbers.append(i)
-		else:
-			housenumbers.append(int(word))
-	output = [streetname, housenumbers]
-	return output
+    if len(lst) <= 1:
+        return []
+    streetnameposlist = []
+    housenumberlist = []
+    housenumbers = []
+
+    print lst
+
+    for word in lst:
+        if word in suffix:
+            streetnameposlist.append(lst.index(word)-1)
+            streetnameposlist.append(lst.index(word))
+        if word[0] in string.digits:
+            housenumberlist.append(word)
+    print streetnameposlist
+    streetname = lst[streetnameposlist[0]] + " " + lst[streetnameposlist[1]]
+    for word in housenumberlist:
+        if '-' in word:
+            boundarylist = word.split('-')
+            for i in range(int(boundarylist[0]), int(boundarylist[1]), 2):
+                housenumbers.append(i)
+        else:
+            housenumbers.append(int(word))
+    output = [streetname, housenumbers]
+    return output
 
 def parse(route):
-	parsed_items = []
-	trips = parse_trips(route)
-	for each in trips:
-		parsed_items.append(organize_trip(each))
-	return parsed_items
+    parsed_items = []
+    trips = parse_trips(route)
+    for each in trips:
+        parsed_items.append(organize_trip(each))
+    return parsed_items
 
 if __name__=="__main__":
-    init()
+    init(None)
