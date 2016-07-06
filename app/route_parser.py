@@ -44,20 +44,27 @@ def init(route = None, filename = None, username = None, password = None):
             break
 
         if datarow != None and datacol != None:
+            failedroutes = 0
             parsedroutes = []
             for row_idx in range(datarow, s.nrows):
                 cell_obj = s.cell(row_idx, datacol)
                 # print cell_obj.value
-                parsedroute  = parse(cell_obj.value)
-                print parsedroute
-                parsedroutes.extend(parsedroute)
+                try:
+                    parsedroute = parse(cell_obj.value)
+                    print parsedroute
+                    parsedroutes.extend(parsedroute)
+                except:
+                    failedroutes += 1
+                    print "Failed: %s" % cell_obj.value
+                    pass
 
-            ex = Export()
-            ex.set_login_details(username, password)
-            ex.set_parsed_routes(parsedroutes)
-            ex.generate_excel()
+            # ex = Export()
+            # ex.set_login_details(username, password)
+            # ex.set_parsed_routes(parsedroutes)
+            # ex.generate_excel()
 
             print "[route_parser] Successfully parsed route description and wrote data to file."
+            print "Failed routes %s " % failedroutes
         else:
             print "Route Description column not found, can't proceed."
 
@@ -86,6 +93,7 @@ def parse_trips(str):
     words = str.split()
     output = []
     endoftrip = 0
+    prevendoftrip = 0
     print words
     while len(words) >= 1:
         for word in words:
@@ -98,7 +106,12 @@ def parse_trips(str):
                         endoftrip = i + 1
                         break
                 break
-        output.append(words[:endoftrip])
+
+        if endoftrip == prevendoftrip:
+            endoftrip += 1
+            prevendoftrip = endoftrip
+        else:
+            output.append(words[:endoftrip])
         words = words[endoftrip:]
     return output
 
