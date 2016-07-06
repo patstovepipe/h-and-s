@@ -14,7 +14,7 @@ def test_parse_export():
     ex.set_login_details(None, None)
     parsedroutes = route_parser.parse("4-40 Beach Dr Even#, 650-776 Mountjoy Ave Even#, 2019-2027 Runnymede Ave Odd# (19)")
     ex.set_parsed_routes(parsedroutes)
-    ex.generate_excel()
+    ex.generate_excel()    
 
 if __name__=="__main__":
     # test_basic_export()

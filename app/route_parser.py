@@ -17,30 +17,49 @@ oddcode = ['odd', '#odd', 'odd#', 'odd,', '#odd,', 'odd#,']
 evencode = ['even#', '#even', 'even', 'even,', '#even,', 'even#,',]
 
 # Importing filename from command line, and collecting the data
-def init(route = None):
+def init(route = None, filename = None, username = None, password = None):
     if route != None:
         parsedroute = parse(route)
         print "[route_parser] Parsed the test route: \n", parsedroute
-    else:
-        # This else block doesn't work properly yet.
-        # wb = open_workbook("app/uploads/f16_route_descriptions.xlsx")
+    elif filename != None:
+        wb = open_workbook(filename)
         s = wb.sheet_by_index(0)
 
-        num_cols = s.ncols
-        parsedroutes = []
-        for row_idx in range(6, s.nrows):
-            cell_obj = s.cell(row_idx, 4)
-            # print cell_obj.value
-            parsedroute  = parse(cell_obj.value)
-            print parsedroute
-            parsedroutes.extend(parsedroute)
+        # Find data row and data col in spreadsheet
+        datarow = None
+        datacol = None
+        for row_idx in range(0, s.nrows):
+            for col_idx in range(0, s.ncols):
+                if s.cell(row_idx, col_idx).value and s.cell(row_idx, col_idx).value == "Route Description":
+                    datarow = row_idx + 1
+                    datacol = col_idx
+                    notification = "(Zero indexed) Found datarow at %s and datacol at %s" % (datarow , datacol)
+                    if datacol == 4:
+                        print notification
+                    else:
+                        print notification + " but expected datacol at 4"
+                    break
+            else:
+                continue
+            break
 
-        # ex = Export()
-        # ex.set_login_details(None, None)
-        # ex.set_parsed_routes(parsedroutes)
-        # ex.generate_excel()
+        if datarow != None and datacol != None:
+            parsedroutes = []
+            for row_idx in range(datarow, s.nrows):
+                cell_obj = s.cell(row_idx, datacol)
+                # print cell_obj.value
+                parsedroute  = parse(cell_obj.value)
+                print parsedroute
+                parsedroutes.extend(parsedroute)
 
-        print "[route_parser] Successfully parsed route description and wrote data to file."
+            ex = Export()
+            ex.set_login_details(username, password)
+            ex.set_parsed_routes(parsedroutes)
+            ex.generate_excel()
+
+            print "[route_parser] Successfully parsed route description and wrote data to file."
+        else:
+            print "Route Description column not found, can't proceed."
 
     return
 
@@ -128,4 +147,4 @@ def parse(route):
     return parsed_items
 
 if __name__=="__main__":
-    init(None)
+    init(None, None, None, None)
